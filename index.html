@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Sales Shift Model</title>
+    <style>
+        /* Base Styles */
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            line-height: 1.4;
+        }
+
+        /* Layout Components */
+        .container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 15px 0; }
+        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin: 15px 0; }
+        .overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+
+        /* Typography */
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 15px; font-size: 24px; font-weight: 600; }
+        h2 { color: #34495e; border-left: 3px solid #3498db; padding-left: 8px; margin: 15px 0 10px 0; font-size: 18px; font-weight: 600; }
+        h3 { margin-top: 0; color: #2c3e50; text-align: center; font-size: 16px; font-weight: 600; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; color: #495057; font-size: 14px; }
+        small { color: #6c757d; font-size: 12px; display: block; margin-top: 2px; }
+
+        /* Form Elements */
+        .input-group { background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #dee2e6; }
+        input { width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; transition: border-color 0.15s ease-in-out; }
+        input:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25); }
+        
+        /* Buttons */
+        button { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 600; 
+            margin: 4px; 
+            transition: all 0.2s ease;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3); }
+        button:active { transform: translateY(0); }
+
+        /* Cards and Metrics */
+        .card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .summary { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .sales-card { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .metric { background: rgba(255,255,255,0.2); padding: 8px; border-radius: 4px; text-align: center; backdrop-filter: blur(10px); }
+        .metric-value { font-size: 18px; font-weight: 700; display: block; }
+        .metric-label { font-size: 10px; opacity: 0.9; margin-top: 2px; }
+
+        /* Data Cards */
+        .data-card { background: #e3f2fd; padding: 12px; border-radius: 6px; text-align: center; border-left: 3px solid #2196f3; font-size: 13px; }
+        .data-card strong { color: #1976d2; font-size: 16px; display: block; }
+
+        /* Charts */
+        .chart-section { grid-column: 1 / -1; }
+        .chart-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .chart-title { color: #2c3e50; font-size: 14px; font-weight: 600; margin-bottom: 10px; text-align: center; }
+
+        /* Advanced Section */
+        .advanced-section { margin-top: 20px; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; }
+        .advanced-header { 
+            background: #f8f9fa; 
+            padding: 12px; 
+            cursor: pointer; 
+            border-bottom: 1px solid #dee2e6; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        .advanced-header:hover { background: #e9ecef; }
+        .advanced-content { padding: 15px; display: none; }
+        .advanced-content.show { display: block; }
+        .arrow { transition: transform 0.3s ease; }
+        .arrow.rotated { transform: rotate(180deg); }
+
+        /* Notifications */
+        .note { background: #fff3cd; border: 1px solid #ffeaa7; padding: 12px; border-radius: 6px; color: #856404; margin: 12px 0; font-size: 13px; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) { 
+            .results-grid { grid-template-columns: 1fr; } 
+            .charts-grid { grid-template-columns: 1fr; }
+            .overview { grid-template-columns: repeat(2, 1fr); }
+            body { padding: 10px; }
+        }
+        @media (max-width: 480px) {
+            .overview { grid-template-columns: 1fr; }
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Subscription Sales Shift Model</h1>
+        
+        <div class="note">
+            <strong>📊 Validated Data:</strong> 270,000 customers across 9 regions over 6 months (Oct 2024 - Mar 2025). 
+            Temporal stability: 2.4% subscription variance, 6.1% sales variance.
+        </div>
+        
+        <div class="overview">
+            <div class="data-card"><strong>185,227</strong><small>Current Subscribers (68.6%)</small></div>
+            <div class="data-card"><strong>99,900</strong><small>SCS Experience (37.0%)</small></div>
+            <div class="data-card"><strong>138,500</strong><small>Pharmanex Sales (51.3%)</small></div>
+            <div class="data-card"><strong>84,773</strong><small>No Subscription (31.4%)</small></div>
+        </div>
+
+        <h2>💰 Commission Settings</h2>
+        <div class="grid">
+            <div class="input-group">
+                <label for="commission">Commission Increase (%)</label>
+                <input type="number" id="commission" value="10" min="0" max="50" step="1">
+                <small>How much higher will commissions be?</small>
+            </div>
+            <div class="input-group">
+                <label for="motivation">Sales Motivation Boost (%)</label>
+                <input type="number" id="motivation" value="15" min="0" max="50" step="1">
+                <small>Additional sales from increased motivation</small>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="calculate()">🚀 Calculate Impact</button>
+            <button onclick="reset()">🔄 Reset to Defaults</button>
+        </div>
+        
+        <div id="results" aria-live="polite"></div>
+
+        <div class="advanced-section">
+            <div class="advanced-header" onclick="toggleAdvanced()" role="button" tabindex="0" aria-expanded="false">
+                <span>⚙️ Advanced Settings - Base Adoption Rates (%)</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="advanced-content" id="advanced-content">
+                <div class="note">
+                    <strong>🎯 For Advanced Users:</strong> Base probabilities for each customer segment to adopt the new subscription type, before commission adjustments.
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label for="rate1">Subscribers: SCS + Pharmanex (%)</label>
+                        <input type="number" id="rate1" value="55" min="0" max="100" step="1">
+                        <small>74,125 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate2">Subscribers: SCS Only (%)</label>
+                        <input type="number" id="rate2" value="40" min="0" max="100" step="1">
+                        <small>4,129 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate3">Subscribers: Pharmanex Only (%)</label>
+                        <input type="number" id="rate3" value="25" min="0" max="100" step="1">
+                        <small>34,224 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate4">Subscribers: Neither (%)</label>
+                        <input type="number" id="rate4" value="12" min="0" max="100" step="1">
+                        <small>72,749 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate5">Non-Subs: SCS + Pharmanex (%)</label>
+                        <input type="number" id="rate5" value="18" min="0" max="100" step="1">
+                        <small>16,175 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate6">Non-Subs: SCS Only (%)</label>
+                        <input type="number" id="rate6" value="12" min="0" max="100" step="1">
+                        <small>1,235 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate7">Non-Subs: Pharmanex Only (%)</label>
+                        <input type="number" id="rate7" value="8" min="0" max="100" step="1">
+                        <small>22,508 people</small>
+                    </div>
+                    <div class="input-group">
+                        <label for="rate8">Non-Subs: Neither (%)</label>
+                        <input type="number" id="rate8" value="1" min="0" max="100" step="1">
+                        <small>75,855 people</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        // Configuration Constants
+        const CONFIG = {
+            SEGMENTS: [
+                [74125, 274, 0.03],   // Subs: SCS + Pharmanex
+                [4129, 254, 0.025],   // Subs: SCS Only  
+                [34224, 194, 0.02],   // Subs: Pharmanex Only
+                [72749, 132, 0.015],  // Subs: Neither
+                [16175, 442, 0.02],   // Non-subs: SCS + Pharmanex
+                [1235, 350, 0.015],   // Non-subs: SCS Only
+                [22508, 280, 0.01],   // Non-subs: Pharmanex Only
+                [75855, 180, 0.005]   // Non-subs: Neither
+            ],
+            MONTHS: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+            SEASONAL_MULTIPLIERS: [1.0, 0.95, 1.1, 0.9, 1.05, 1.0],
+            COMPANY_SALES: 61300000,
+            CHART_CONFIG: {
+                width: 350,
+                height: 250,
+                padding: 40,
+                colors: {
+                    people: '#3498db',
+                    sales: '#e74c3c', 
+                    incremental: '#2ecc71'
+                }
+            }
+        };
+
+        // Utility Functions
+        const utils = {
+            formatNumber: function(num) {
+                return num.toLocaleString();
+            },
+            formatMillion: function(num) {
+                return '$' + (num / 1000000).toFixed(1) + 'M';
+            },
+            getElement: function(id) {
+                return document.getElementById(id);
+            },
+            parseInputValue: function(id) {
+                return parseFloat(this.getElement(id).value) || 0;
+            }
+        };
+
+        // Business Logic
+        const calculator = {
+            getInputs: function() {
+                const rates = [];
+                for (var i = 1; i <= 8; i++) {
+                    rates.push(utils.parseInputValue('rate' + i) / 100);
+                }
+                return {
+                    commission: utils.parseInputValue('commission'),
+                    motivation: utils.parseInputValue('motivation') / 100,
+                    rates: rates
+                };
+            },
+
+            calculateTotals: function(inputs) {
+                var totals = { people: 0, sales: 0, incremental: 0 };
+                
+                for (var i = 0; i < CONFIG.SEGMENTS.length; i++) {
+                    var segment = CONFIG.SEGMENTS[i];
+                    var count = segment[0];
+                    var avgSales = segment[1]; 
+                    var sensitivity = segment[2];
+                    
+                    var adjustedRate = Math.min(inputs.rates[i] * (1 + inputs.commission * sensitivity), 1);
+                    var people = Math.round(count * adjustedRate);
+                    var sales = people * avgSales;
+                    var incremental = sales * inputs.motivation;
+                    
+                    totals.people += people;
+                    totals.sales += sales;
+                    totals.incremental += incremental;
+                }
+                
+                return totals;
+            },
+
+            generateMonthlyData: function(totals) {
+                var monthlyData = [];
+                for (var i = 0; i < CONFIG.MONTHS.length; i++) {
+                    var multiplier = CONFIG.SEASONAL_MULTIPLIERS[i];
+                    monthlyData.push({
+                        month: CONFIG.MONTHS[i],
+                        people: Math.round(totals.people / 6 * multiplier),
+                        sales: totals.sales / 6 * multiplier / 1000000,
+                        incremental: totals.incremental / 6 * multiplier / 1000000
+                    });
+                }
+                return monthlyData;
+            }
+        };
+
+        // UI Rendering
+        const renderer = {
+            buildResultsHTML: function(inputs, totals) {
+                var totalCustomers = CONFIG.SEGMENTS.reduce(function(sum, segment) { return sum + segment[0]; }, 0);
+                var switchingPercentage = (totals.people / totalCustomers * 100).toFixed(1);
+                var salesVolumeAffected = totals.sales + totals.incremental;
+                var salesVolumePercent = (salesVolumeAffected / CONFIG.COMPANY_SALES * 100).toFixed(1);
+                var incrementalPercent = (totals.incremental / CONFIG.COMPANY_SALES * 100).toFixed(1);
+                var existingSalesPercent = (totals.sales / CONFIG.COMPANY_SALES * 100).toFixed(1);
+                
+                var html = '<div class="results-grid">';
+                
+                // Total Impact Card - Compact 2x2 grid
+                html += '<div class="card summary"><h3 style="margin-bottom: 8px;">📊 Total Impact (' + inputs.commission + '% Commission)</h3>';
+                html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatNumber(totals.people) + '</div><div style="font-size: 9px; opacity: 0.9;">' + switchingPercentage + '% of Customers</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(salesVolumeAffected) + '</div><div style="font-size: 9px; opacity: 0.9;">' + salesVolumePercent + '% Sales Volume Affected</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(totals.sales) + '</div><div style="font-size: 9px; opacity: 0.9;">' + existingSalesPercent + '% Existing Sales Moving</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(totals.incremental) + '</div><div style="font-size: 9px; opacity: 0.9;">' + incrementalPercent + '% Incremental Revenue</div></div>';
+                html += '</div></div>';
+
+                // Sales Breakdown Card
+                html += '<div class="card sales-card"><div><strong>💰 Sales Breakdown</strong></div>';
+                html += '<div class="metrics">';
+                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(totals.sales) + '</span><span class="metric-label">Existing Sales Moving</span></div>';
+                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(totals.incremental) + '</span><span class="metric-label">Incremental Sales</span></div>';
+                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(salesVolumeAffected) + '</span><span class="metric-label">Total Volume</span></div>';
+                html += '</div></div>';
+                html += '</div>';
+
+                // Impact Explanation
+                html += '<div class="note" style="margin: 15px 0; background: #e8f5e8; border-color: #28a745; color: #155724;">';
+                html += '<strong>💡 Understanding the Impact:</strong><br>';
+                html += '• <strong>Customer Adoption:</strong> ' + switchingPercentage + '% of your ' + utils.formatNumber(totalCustomers) + ' customers will switch to the new subscription<br>';
+                html += '• <strong>Existing Sales Moving:</strong> ' + existingSalesPercent + '% of company sales will move from current to new commission structure<br>';
+                html += '• <strong>Net Revenue Increase:</strong> ' + incrementalPercent + '% (' + utils.formatMillion(totals.incremental) + ') is truly incremental revenue<br>';
+                html += '• <strong>ROI Consideration:</strong> Compare the ' + utils.formatMillion(totals.incremental) + ' incremental revenue against increased commission costs on ' + utils.formatMillion(salesVolumeAffected) + ' total volume';
+                html += '</div>';
+
+                // Charts Section
+                html += '<div class="chart-section">';
+                html += '<h3>📈 Monthly Impact Projections</h3>';
+                html += '<div class="charts-grid">';
+                html += '<div class="chart-card"><div class="chart-title">👥 People Switching to New Subscription</div>';
+                html += '<canvas id="peopleChart" width="350" height="250"></canvas></div>';
+                html += '<div class="chart-card"><div class="chart-title">💰 Sales Volume Impact ($M)</div>';
+                html += '<canvas id="salesChart" width="350" height="250"></canvas></div>';
+                html += '<div class="chart-card"><div class="chart-title">📈 Incremental Sales ($M)</div>';
+                html += '<canvas id="incrementalChart" width="350" height="250"></canvas></div>';
+                html += '</div></div>';
+
+                return html;
+            }
+        };
+
+        // Chart Rendering
+        const chartRenderer = {
+            createAllCharts: function(monthlyData) {
+                this.createChart('peopleChart', monthlyData, 'people', CONFIG.CHART_CONFIG.colors.people, 'People');
+                this.createChart('salesChart', monthlyData, 'sales', CONFIG.CHART_CONFIG.colors.sales, '$M');
+                this.createChart('incrementalChart', monthlyData, 'incremental', CONFIG.CHART_CONFIG.colors.incremental, '$M');
+            },
+
+            createChart: function(canvasId, data, dataKey, color, unit) {
+                var canvas = utils.getElement(canvasId);
+                if (!canvas) return;
+                
+                var ctx = canvas.getContext('2d');
+                var config = CONFIG.CHART_CONFIG;
+                
+                canvas.width = config.width;
+                canvas.height = config.height;
+                ctx.clearRect(0, 0, config.width, config.height);
+                
+                var maxValue = Math.max.apply(Math, data.map(function(d) { return d[dataKey]; }));
+                var chartWidth = config.width - 2 * config.padding;
+                var chartHeight = config.height - 2 * config.padding;
+                var barWidth = chartWidth / data.length * 0.7;
+                var barSpacing = chartWidth / data.length;
+                
+                // Draw bars and labels
+                for (var i = 0; i < data.length; i++) {
+                    this.drawBar(ctx, data[i], dataKey, i, maxValue, barWidth, barSpacing, chartWidth, chartHeight, color, unit, config);
+                }
+                
+                // Draw axes
+                this.drawAxes(ctx, config, chartWidth, chartHeight);
+                
+                // Draw Y-axis labels
+                this.drawYAxisLabels(ctx, maxValue, config, chartHeight, unit);
+            },
+
+            drawBar: function(ctx, item, dataKey, index, maxValue, barWidth, barSpacing, chartWidth, chartHeight, color, unit, config) {
+                var value = item[dataKey];
+                var barHeight = (value / maxValue) * chartHeight * 0.8;
+                var x = config.padding + (index * barSpacing) + (barSpacing - barWidth) / 2;
+                var y = config.padding + chartHeight - barHeight;
+                
+                // Create gradient
+                var gradient = ctx.createLinearGradient(0, y, 0, y + barHeight);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, color + '80');
+                
+                // Draw bar
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                // Value label
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                var label = unit === '$M' ? '$' + value.toFixed(1) + 'M' : utils.formatNumber(value);
+                ctx.fillText(label, x + barWidth/2, y - 5);
+                
+                // Month label
+                ctx.fillStyle = '#666';
+                ctx.font = '11px Arial';
+                ctx.fillText(item.month, x + barWidth/2, config.height - 5);
+            },
+
+            drawAxes: function(ctx, config, chartWidth, chartHeight) {
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(config.padding, config.padding);
+                ctx.lineTo(config.padding, config.padding + chartHeight);
+                ctx.moveTo(config.padding, config.padding + chartHeight);
+                ctx.lineTo(config.padding + chartWidth, config.padding + chartHeight);
+                ctx.stroke();
+            },
+
+            drawYAxisLabels: function(ctx, maxValue, config, chartHeight, unit) {
+                ctx.fillStyle = '#666';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'right';
+                
+                for (var j = 0; j <= 4; j++) {
+                    var yValue = (maxValue / 4) * j;
+                    var yPos = config.padding + chartHeight - (j * chartHeight / 4 * 0.8);
+                    var label = unit === '$M' ? '$' + yValue.toFixed(1) + 'M' : Math.round(yValue).toLocaleString();
+                    ctx.fillText(label, config.padding - 5, yPos + 3);
+                }
+            }
+        };
+
+        // Main Functions
+        function calculate() {
+            var inputs = calculator.getInputs();
+            var totals = calculator.calculateTotals(inputs);
+            var monthlyData = calculator.generateMonthlyData(totals);
+            
+            utils.getElement('results').innerHTML = renderer.buildResultsHTML(inputs, totals);
+            
+            setTimeout(function() {
+                chartRenderer.createAllCharts(monthlyData);
+            }, 50);
+        }
+
+        function reset() {
+            var defaults = { commission: 10, motivation: 15, rates: [55, 40, 25, 12, 18, 12, 8, 1] };
+            
+            utils.getElement('commission').value = defaults.commission;
+            utils.getElement('motivation').value = defaults.motivation;
+            
+            for (var i = 1; i <= 8; i++) {
+                utils.getElement('rate' + i).value = defaults.rates[i - 1];
+            }
+            
+            utils.getElement('results').innerHTML = '';
+        }
+
+        function toggleAdvanced() {
+            var content = utils.getElement('advanced-content');
+            var arrow = document.querySelector('.arrow');
+            var header = document.querySelector('.advanced-header');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                arrow.classList.remove('rotated');
+                header.setAttribute('aria-expanded', 'false');
+            } else {
+                content.classList.add('show');
+                arrow.classList.add('rotated');
+                header.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', calculate);
+    </script>
+</body>
+</html>
