@@ -109,11 +109,6 @@
     <div class="container">
         <h1>🔄 Subscription Sales Shift Model</h1>
         
-        <div class="note">
-            <strong>📊 Validated Data:</strong> 270,000 customers across 9 regions over 6 months (Oct 2024 - Mar 2025). 
-            Temporal stability: 2.4% subscription variance, 6.1% sales variance.
-        </div>
-        
         <div class="overview">
             <div class="data-card"><strong>185,227</strong><small>Current Subscribers (68.6%)</small></div>
             <div class="data-card"><strong>99,900</strong><small>SCS Experience (37.0%)</small></div>
@@ -138,6 +133,10 @@
         <div style="text-align: center; margin: 20px 0;">
             <button onclick="calculate()">🚀 Calculate Impact</button>
             <button onclick="reset()">🔄 Reset to Defaults</button>
+        </div>
+
+        <div class="note" style="margin: 15px 0; background: #e3f2fd; border-color: #2196f3; color: #1565c0;">
+            <strong>📋 Context Note:</strong> This output is based on 6 months of randomized customer data. The model has taken into account numerous factors in individual purchasing behaviors including subscription activity, product category purchases, product brand, etc. Additionally, region and time/date have also been taken into account. The actual numbers below relate to the sample, but the percentages can be used as a guide for future customer behavior.
         </div>
         
         <div id="results" aria-live="polite"></div>
@@ -195,6 +194,11 @@
                 </div>
             </div>
         </div>
+
+        <div class="note" style="margin-top: 15px;">
+            <strong>📊 Validated Data:</strong> 270,000 customers across 9 regions over 6 months (Oct 2024 - Mar 2025). 
+            Temporal stability: 2.4% subscription variance, 6.1% sales variance.
+        </div>
     </div>
 
     <script>
@@ -233,7 +237,7 @@
                 return num.toLocaleString();
             },
             formatMillion: function(num) {
-                return '$' + (num / 1000000).toFixed(1) + 'M';
+                return (num / 1000000).toFixed(1) + 'M CV';
             },
             getElement: function(id) {
                 return document.getElementById(id);
@@ -280,14 +284,19 @@
             },
 
             generateMonthlyData: function(totals) {
+                var totalCustomers = CONFIG.SEGMENTS.reduce(function(sum, segment) { return sum + segment[0]; }, 0);
                 var monthlyData = [];
                 for (var i = 0; i < CONFIG.MONTHS.length; i++) {
                     var multiplier = CONFIG.SEASONAL_MULTIPLIERS[i];
+                    var monthlyPeople = Math.round(totals.people / 6 * multiplier);
+                    var monthlySales = totals.sales / 6 * multiplier / 1000000;
+                    var monthlyIncremental = totals.incremental / 6 * multiplier / 1000000;
+                    
                     monthlyData.push({
                         month: CONFIG.MONTHS[i],
-                        people: Math.round(totals.people / 6 * multiplier),
-                        sales: totals.sales / 6 * multiplier / 1000000,
-                        incremental: totals.incremental / 6 * multiplier / 1000000
+                        people: (monthlyPeople / totalCustomers * 100), // Convert to percentage
+                        sales: (monthlySales / (CONFIG.COMPANY_SALES / 1000000) * 100), // Convert to percentage of company sales
+                        incremental: (monthlyIncremental / (CONFIG.COMPANY_SALES / 1000000) * 100) // Convert to percentage of company sales
                     });
                 }
                 return monthlyData;
@@ -306,21 +315,21 @@
                 
                 var html = '<div class="results-grid">';
                 
-                // Total Impact Card - Compact 2x2 grid
+                // Total Impact Card - Compact 2x2 grid with % prominent
                 html += '<div class="card summary"><h3 style="margin-bottom: 8px;">📊 Total Impact (' + inputs.commission + '% Commission)</h3>';
                 html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">';
-                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatNumber(totals.people) + '</div><div style="font-size: 9px; opacity: 0.9;">' + switchingPercentage + '% of Customers</div></div>';
-                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(salesVolumeAffected) + '</div><div style="font-size: 9px; opacity: 0.9;">' + salesVolumePercent + '% Sales Volume Affected</div></div>';
-                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(totals.sales) + '</div><div style="font-size: 9px; opacity: 0.9;">' + existingSalesPercent + '% Existing Sales Moving</div></div>';
-                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + utils.formatMillion(totals.incremental) + '</div><div style="font-size: 9px; opacity: 0.9;">' + incrementalPercent + '% Incremental Revenue</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + switchingPercentage + '%</div><div style="font-size: 9px; opacity: 0.9;">' + utils.formatNumber(totals.people) + ' Customers</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + salesVolumePercent + '%</div><div style="font-size: 9px; opacity: 0.9;">' + utils.formatMillion(salesVolumeAffected) + ' Sales Volume</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + existingSalesPercent + '%</div><div style="font-size: 9px; opacity: 0.9;">' + utils.formatMillion(totals.sales) + ' Existing Sales</div></div>';
+                html += '<div style="background: rgba(255,255,255,0.2); padding: 6px; border-radius: 4px; text-align: center;"><div style="font-size: 16px; font-weight: bold;">' + incrementalPercent + '%</div><div style="font-size: 9px; opacity: 0.9;">' + utils.formatMillion(totals.incremental) + ' Incremental</div></div>';
                 html += '</div></div>';
 
-                // Sales Breakdown Card
+                // Sales Breakdown Card - % prominent
                 html += '<div class="card sales-card"><div><strong>💰 Sales Breakdown</strong></div>';
                 html += '<div class="metrics">';
-                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(totals.sales) + '</span><span class="metric-label">Existing Sales Moving</span></div>';
-                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(totals.incremental) + '</span><span class="metric-label">Incremental Sales</span></div>';
-                html += '<div class="metric"><span class="metric-value">' + utils.formatMillion(salesVolumeAffected) + '</span><span class="metric-label">Total Volume</span></div>';
+                html += '<div class="metric"><span class="metric-value">' + existingSalesPercent + '%</span><span class="metric-label">' + utils.formatMillion(totals.sales) + ' Existing Sales</span></div>';
+                html += '<div class="metric"><span class="metric-value">' + incrementalPercent + '%</span><span class="metric-label">' + utils.formatMillion(totals.incremental) + ' Incremental Sales</span></div>';
+                html += '<div class="metric"><span class="metric-value">' + salesVolumePercent + '%</span><span class="metric-label">' + utils.formatMillion(salesVolumeAffected) + ' Total Volume</span></div>';
                 html += '</div></div>';
                 html += '</div>';
 
@@ -337,11 +346,11 @@
                 html += '<div class="chart-section">';
                 html += '<h3>📈 Monthly Impact Projections</h3>';
                 html += '<div class="charts-grid">';
-                html += '<div class="chart-card"><div class="chart-title">👥 People Switching to New Subscription</div>';
+                html += '<div class="chart-card"><div class="chart-title">👥 % of Customers Switching</div>';
                 html += '<canvas id="peopleChart" width="350" height="250"></canvas></div>';
-                html += '<div class="chart-card"><div class="chart-title">💰 Sales Volume Impact ($M)</div>';
+                html += '<div class="chart-card"><div class="chart-title">💰 % Sales Volume Impact</div>';
                 html += '<canvas id="salesChart" width="350" height="250"></canvas></div>';
-                html += '<div class="chart-card"><div class="chart-title">📈 Incremental Sales ($M)</div>';
+                html += '<div class="chart-card"><div class="chart-title">📈 % Incremental Sales</div>';
                 html += '<canvas id="incrementalChart" width="350" height="250"></canvas></div>';
                 html += '</div></div>';
 
@@ -352,9 +361,9 @@
         // Chart Rendering
         const chartRenderer = {
             createAllCharts: function(monthlyData) {
-                this.createChart('peopleChart', monthlyData, 'people', CONFIG.CHART_CONFIG.colors.people, 'People');
-                this.createChart('salesChart', monthlyData, 'sales', CONFIG.CHART_CONFIG.colors.sales, '$M');
-                this.createChart('incrementalChart', monthlyData, 'incremental', CONFIG.CHART_CONFIG.colors.incremental, '$M');
+                this.createChart('peopleChart', monthlyData, 'people', CONFIG.CHART_CONFIG.colors.people, '%');
+                this.createChart('salesChart', monthlyData, 'sales', CONFIG.CHART_CONFIG.colors.sales, '%');
+                this.createChart('incrementalChart', monthlyData, 'incremental', CONFIG.CHART_CONFIG.colors.incremental, '%');
             },
 
             createChart: function(canvasId, data, dataKey, color, unit) {
@@ -405,7 +414,7 @@
                 ctx.fillStyle = '#333';
                 ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
-                var label = unit === '$M' ? '$' + value.toFixed(1) + 'M' : utils.formatNumber(value);
+                var label = unit === '%' ? value.toFixed(1) + '%' : utils.formatNumber(value);
                 ctx.fillText(label, x + barWidth/2, y - 5);
                 
                 // Month label
@@ -433,7 +442,7 @@
                 for (var j = 0; j <= 4; j++) {
                     var yValue = (maxValue / 4) * j;
                     var yPos = config.padding + chartHeight - (j * chartHeight / 4 * 0.8);
-                    var label = unit === '$M' ? '$' + yValue.toFixed(1) + 'M' : Math.round(yValue).toLocaleString();
+                    var label = unit === '%' ? yValue.toFixed(1) + '%' : Math.round(yValue).toLocaleString();
                     ctx.fillText(label, config.padding - 5, yPos + 3);
                 }
             }
